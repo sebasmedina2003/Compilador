@@ -1,13 +1,13 @@
-import compilerTools.Token;
+import compilerTools.TextColor;
+import java.awt.Color;
 
 %%
-%class Lexer
-%type Token
-%line
-%column
+%class LexerColor
+%type TextColor
+%char
 %{
-    private Token token(String lexeme, String lexicalComp, int line, int column){
-        return new Token(lexeme, lexicalComp, line+1, column+1);
+    private TextColor textColor(long start, int size, Color color){
+        return new TextColor((int) start, size, color);
     }
 %}
 /* Variables básicas de comentarios y espacios */
@@ -15,7 +15,7 @@ TerminadorDeLinea = \r|\n|\r\n
 EntradaDeCaracter = [^\r\n]
 EspacioEnBlanco = {TerminadorDeLinea} | [ \t\f]
 ComentarioTradicional = "/*" [^*] ~"*/" | "/*" "*"+ "/"
-FinDeLineaComentario = "//" {EntradaDeCaracter}* {TerminadorDeLinea}?
+FinDeLineaComentario = "$" {EntradaDeCaracter}* {TerminadorDeLinea}?
 ContenidoComentario = ( [^*] | \*+ [^/*] )*
 ComentarioDeDocumentacion = "/**" {ContenidoComentario} "*"+ "/"
 
@@ -32,6 +32,7 @@ Numero = 0 | [1-9][0-9]*
 %%
 
 /* Comentarios o espacios en blanco */
-{Comentario}|{EspacioEnBlanco} { /*Ignorar*/ }
+{Comentario} { return textColor(yychar, yylength(), new Color(146, 146, 146)); }
+{EspacioEnBlanco} { /*Ignorar*/ }
 
-. { return token(yytext(), "ERROR", yyline, yycolumn); }
+. { /* Ignorar */ }

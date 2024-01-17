@@ -1,5 +1,6 @@
 package Compilador;
 
+import com.formdev.flatlaf.FlatIntelliJLaf;
 import compilerTools.Directory;
 import compilerTools.ErrorLSSL;
 import compilerTools.Functions;
@@ -10,11 +11,22 @@ import compilerTools.Token;
 import java.awt.Color;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 public class Compiler extends javax.swing.JFrame {
     
@@ -45,7 +57,7 @@ public class Compiler extends javax.swing.JFrame {
         
         this.tokens = new ArrayList<>();
         this.errors = new ArrayList<>();
-        this.textColor = new ArrayList<>();
+        this.textColors = new ArrayList<>();
         this.idenProd = new ArrayList<>();
         this.identificadores = new HashMap<>();
         this.palabrasReservadas = new String[]{
@@ -62,7 +74,30 @@ public class Compiler extends javax.swing.JFrame {
     }
     
     private void colorAnalysis(){
-    
+        LexerColor lexer;
+        
+        try{
+            File codigo = new File("color.encrypter");
+            FileOutputStream output = new FileOutputStream(codigo);
+            byte[] bytesText = this.codeEditor.getText().getBytes();
+            output.write(bytesText);
+            BufferedReader entrada = new BufferedReader(new InputStreamReader(new FileInputStream(codigo), "UTF-8"));
+   
+            lexer = new LexerColor(entrada);
+             while(true){
+                 TextColor textColor = lexer.yylex();
+                 
+                 if(textColor == null){ break; }
+                 this.textColors.add(textColor);
+             }
+            
+        }catch(FileNotFoundException e){
+            Logger.getLogger(Compiler.class.getName()).log(Level.SEVERE, null, e);
+        }catch(IOException e){
+            Logger.getLogger(Compiler.class.getName()).log(Level.SEVERE, null, e);
+        }
+        
+        Functions.colorTextPane(this.textColors, this.codeEditor, new Color(40, 40, 40));
     }
     
     private void clearFields(){
@@ -73,19 +108,43 @@ public class Compiler extends javax.swing.JFrame {
         this.identificadores.clear();
     }
     
-    private void lexicalAnalysis(){
-    
+    private void lexicalAnalysis() throws FileNotFoundException{
+        Lexer lexer;
+        
+        try{
+            File codigo = new File("code.encrypter");
+            FileOutputStream output = new FileOutputStream(codigo);
+            byte[] bytesText = this.codeEditor.getText().getBytes();
+            output.write(bytesText);
+            BufferedReader entrada = new BufferedReader(new InputStreamReader(new FileInputStream(codigo), "UTF-8"));
+   
+            lexer = new Lexer(entrada);
+             while(true){
+                 Token token = lexer.yylex();
+                 
+                 if(token == null){ break; }
+                 this.tokens.add(token);
+             }
+            
+        }catch(FileNotFoundException e){
+            Logger.getLogger(Compiler.class.getName()).log(Level.SEVERE, null, e);
+        }catch(IOException e){
+            Logger.getLogger(Compiler.class.getName()).log(Level.SEVERE, null, e);
+        }
     }
     
     private void printTokens(){
-        this.tokens.forEach(token -> {
-            Object[] data = new Object[]{
+        Object[] data = new Object[]{};
+        String strTokens = "";
+        
+        for(Token token: this.tokens){
+                data = new Object[]{
                 token.getLexicalComp(), token.getLexeme(), 
                 "[" + token.getLine() + ", " + token.getColumn() + "]"
             };
-            
-            System.out.println(Arrays.toString(data));
-        });
+            strTokens += Arrays.toString(data) + "\n";
+        }
+        this.terminal.setText(strTokens);
     }
     
     private void syntaticAnalysis(){
@@ -107,13 +166,13 @@ public class Compiler extends javax.swing.JFrame {
             for(ErrorLSSL error: errors){
                 strErrors += String.valueOf(error) + "\n";
             }
-            this.terminal.setText("Compilacion terminada con errores...\n" + strErrors);
+            this.terminal.setText(this.terminal.getText() + "\nCompilacion terminada con errores...\n" + strErrors);
         } else{
-            this.terminal.setText("Compilacion terminada...");
+            this.terminal.setText(this.terminal.getText() + "\nCompilacion terminada...");
         }
     }
     
-    private void compile(){
+    private void compile() throws FileNotFoundException{
         this.clearFields();
         this.lexicalAnalysis();
         this.printTokens();
@@ -132,8 +191,6 @@ public class Compiler extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        codeEditor = new javax.swing.JTextArea();
         jScrollPane2 = new javax.swing.JScrollPane();
         terminal = new javax.swing.JTextArea();
         jLabel2 = new javax.swing.JLabel();
@@ -141,6 +198,8 @@ public class Compiler extends javax.swing.JFrame {
         jSeparator7 = new javax.swing.JSeparator();
         jProgressBar1 = new javax.swing.JProgressBar();
         jLabel1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        codeEditor = new javax.swing.JTextPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -167,11 +226,6 @@ public class Compiler extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("COMPILADOR PARA EL LENGUAJE MYTHOS");
 
-        codeEditor.setColumns(20);
-        codeEditor.setFont(new java.awt.Font("Cascadia Code", 0, 14)); // NOI18N
-        codeEditor.setRows(5);
-        jScrollPane1.setViewportView(codeEditor);
-
         terminal.setColumns(20);
         terminal.setFont(new java.awt.Font("Cascadia Code", 0, 14)); // NOI18N
         terminal.setRows(5);
@@ -184,6 +238,8 @@ public class Compiler extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Gadugi", 0, 14)); // NOI18N
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         jLabel1.setText("Unsaved file");
+
+        jScrollPane1.setViewportView(codeEditor);
 
         jMenu1.setText("File");
         jMenu1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -338,9 +394,7 @@ public class Compiler extends javax.swing.JFrame {
                         .addGap(8, 8, 8))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1170, Short.MAX_VALUE)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING))))
+                        .addComponent(jScrollPane2)))
                 .addGap(25, 25, 25))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
@@ -353,14 +407,18 @@ public class Compiler extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(448, 448, 448)
                 .addComponent(jProgressBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(435, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(21, 21, 21)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel2)
                     .addComponent(jSeparator6, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -412,10 +470,18 @@ public class Compiler extends javax.swing.JFrame {
     private void menuCompileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuCompileActionPerformed
         if(this.getTitle().contains("*") || this.getTitle().equals(this.title)){
             if(this.directorio.Save()){
-                this.compile();
+                try {
+                    this.compile();
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(Compiler.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         } else{
-            this.compile();
+            try {
+                this.compile();
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Compiler.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }//GEN-LAST:event_menuCompileActionPerformed
 
@@ -461,14 +527,20 @@ public class Compiler extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Compiler().setVisible(true);
+                try {
+                    UIManager.setLookAndFeel(new FlatIntelliJLaf());
+                    new Compiler().setVisible(true);
+                } catch (UnsupportedLookAndFeelException ex) {
+                    Logger.getLogger(Compiler.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem MenuCloseFile;
-    private javax.swing.JTextArea codeEditor;
+    private javax.swing.JTextPane codeEditor;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu1;
@@ -503,7 +575,7 @@ public class Compiler extends javax.swing.JFrame {
     private Directory directorio;
     private ArrayList<Token> tokens;
     private ArrayList<ErrorLSSL> errors;
-    private ArrayList<TextColor> textColor;
+    private ArrayList<TextColor> textColors;
     private Timer timerKeyRelesed;
     private ArrayList<Production> idenProd;
     private HashMap<String, String> identificadores;

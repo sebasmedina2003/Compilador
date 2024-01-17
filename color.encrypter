@@ -1,0 +1,38 @@
+/*
+ Esto es un comentario 
+de varias lineas
+*/
+
+$ Este es un comentario
+
+char
+int
+float
+str
+for
+if
+else
+try
+except
+and
+or
++
+-
+*
+/
+//
+%
+==
+>=
+<=
+!=
+{
+}
+(
+)
+
+prueba = 12
+decimal = 12.36
+hola = "Hola Mundo 3223"
+booleana = False
+sdfsf=12...54
